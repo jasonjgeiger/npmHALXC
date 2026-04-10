@@ -3,6 +3,7 @@
 # Run on each Proxmox host separately — choose MASTER or BACKUP role.
 # Set up MASTER first, then use the displayed SSH key when setting up BACKUP.
 set -euo pipefail
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin:${PATH}"
 
 # ─── Colors & Icons ──────────────────────────────────────────────────────────
 YW="\033[33m"; YWB="\033[93m"; BL="\033[36m"; RD="\033[01;31m"
