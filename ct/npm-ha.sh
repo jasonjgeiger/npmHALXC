@@ -131,6 +131,7 @@ read -rp "${TAB3}CPU cores        [2]: "                   var_cores;    var_cor
 read -rp "${TAB3}RAM (MB)         [512]: "                 var_ram;      var_ram="${var_ram:-512}"
 read -rp "${TAB3}Disk (GB)        [8]: "                   var_disk;     var_disk="${var_disk:-8}"
 read -rp "${TAB3}Network bridge   [vmbr0]: "               var_bridge;   var_bridge="${var_bridge:-vmbr0}"
+read -rp "${TAB3}VLAN tag         [none]: "                var_vlan
 read -rp "${TAB3}This node IP (x.x.x.x/24): "             var_own_ip
 [[ -z "$var_own_ip" ]]      && msg_error "Node IP is required."
 [[ "$var_own_ip" =~ "/" ]]  || msg_error "IP must include prefix (e.g. 192.168.1.21/24)"
@@ -172,6 +173,7 @@ printf "${TAB}Storage:  ${BOLD}%s${CL}  OS: Ubuntu 24.04 (privileged)\n" "$STORA
 printf "${TAB}Cores:    ${BOLD}%s${CL}  RAM: ${BOLD}%s MB${CL}  Disk: ${BOLD}%s GB${CL}\n" "$var_cores" "$var_ram" "$var_disk"
 printf "${TAB}Own IP:   ${BOLD}%s${CL}  Peer IP: ${BOLD}%s${CL}\n" "$var_own_ip" "$var_peer_ip"
 printf "${TAB}Gateway:  ${BOLD}%s${CL}  DNS: ${BOLD}%s${CL}\n" "$var_gw" "$var_dns"
+[[ -n "$var_vlan" ]] && printf "${TAB}VLAN tag: ${BOLD}%s${CL}\n" "$var_vlan"
 divider
 echo ""
 read -rp "  Proceed? [y/N]: " CONFIRM
@@ -199,7 +201,7 @@ pct create "$var_ctid" "${TMPL_STORAGE}:vztmpl/${TEMPLATE}" \
   --memory "$var_ram" \
   --swap 0 \
   --rootfs "${STORAGE}:${var_disk}" \
-  --net0 "name=eth0,bridge=${var_bridge},ip=${var_own_ip},gw=${var_gw}" \
+  --net0 "name=eth0,bridge=${var_bridge},ip=${var_own_ip},gw=${var_gw}${var_vlan:+,tag=${var_vlan}}" \
   --nameserver "$var_dns" \
   --unprivileged 0 \
   --features nesting=1 \
