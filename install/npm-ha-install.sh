@@ -34,14 +34,29 @@ printf "${DGN}  %-45s  Ubuntu 24.04${CL}\n" "Docker + Nginx Proxy Manager + keep
 printf "${DGN}  OWN_IP: %-18s PEER_IP: %s${CL}\n" "$OWN_IP" "$PEER_IP"
 echo ""
 
-# ─── DNS Check ───────────────────────────────────────────────────────────────
-msg_info "Checking DNS resolution"
-if ! getent hosts archive.ubuntu.com &>/dev/null; then
-  msg_warn "DNS not resolving — writing fallback nameservers to /etc/resolv.conf"
-  printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
-  getent hosts archive.ubuntu.com &>/dev/null \
-    || msg_error "DNS still not resolving after fallback. Check container network/gateway."
-fi
+# ─── Network & DNS ───────────────────────────────────────────────────────────
+msg_info "Waiting for default route"
+WAIT=0
+while [[ $WAIT -lt 30 ]]; do
+  ip route | grep -q default && break
+  sleep 2; WAIT=$((WAIT + 2))
+done
+GW=$(ip route 2>/dev/null | awk '/default/{print $3; exit}')
+[[ -z "$GW" ]] && msg_error "No default route after 30s. Check bridge and IP config in Proxmox."
+msg_ok "Default route via ${GW}"
+
+msg_info "Checking gateway reachability"
+ping -c2 -W3 "$GW" &>/dev/null \
+  || msg_error "Cannot reach gateway ${GW}. Check VLAN, bridge, or IP assignment."
+msg_ok "Gateway ${GW} reachable"
+
+msg_info "Fixing DNS (removing systemd-resolved stub)"
+# Ubuntu 24.04 symlinks /etc/resolv.conf → systemd-resolved stub (127.0.0.53).
+# Remove the symlink and write a real file so DNS works without a running resolver.
+[[ -L /etc/resolv.conf ]] && rm -f /etc/resolv.conf
+printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
+getent hosts archive.ubuntu.com &>/dev/null \
+  || msg_error "DNS still not resolving. Verify the host can reach the internet and gateway ${GW} is routing correctly."
 msg_ok "DNS OK"
 
 # ─── System Update ───────────────────────────────────────────────────────────
