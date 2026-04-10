@@ -51,6 +51,10 @@ ping -c2 -W3 "$GW" &>/dev/null \
   || msg_error "Cannot reach gateway ${GW}. Check VLAN, bridge, or IP assignment."
 msg_ok "Gateway ${GW} reachable"
 
+msg_info "Forcing apt to use IPv4 only"
+printf 'Acquire::ForceIPv4 "true";\n' > /etc/apt/apt.conf.d/99force-ipv4
+msg_ok "apt forced to IPv4"
+
 msg_info "Fixing DNS (removing systemd-resolved stub)"
 # Ubuntu 24.04 symlinks /etc/resolv.conf → systemd-resolved stub (127.0.0.53).
 # Remove the symlink and write a real file so DNS works without a running resolver.
