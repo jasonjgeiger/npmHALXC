@@ -23,6 +23,7 @@ VIP_IFACE="${VIP_IFACE:-eth0}"
 VRRP_ID="${VRRP_ID:-51}"
 VRRP_PASS="${VRRP_PASS:-npmha2024}"
 SYNC_INTERVAL="${SYNC_INTERVAL:-30}"
+DNS_SERVERS="${DNS_SERVERS:-1.1.1.1}"
 
 [[ -z "$OWN_IP" ]]  && msg_error "OWN_IP is required"
 [[ -z "$PEER_IP" ]] && msg_error "PEER_IP is required"
@@ -54,10 +55,13 @@ msg_info "Fixing DNS (removing systemd-resolved stub)"
 # Ubuntu 24.04 symlinks /etc/resolv.conf → systemd-resolved stub (127.0.0.53).
 # Remove the symlink and write a real file so DNS works without a running resolver.
 [[ -L /etc/resolv.conf ]] && rm -f /etc/resolv.conf
-printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
+{
+  for ns in ${DNS_SERVERS:-1.1.1.1}; do printf 'nameserver %s\n' "$ns"; done
+  printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n'  # fallback entries
+} | awk '!seen[$0]++' > /etc/resolv.conf  # deduplicate
 getent hosts archive.ubuntu.com &>/dev/null \
   || msg_error "DNS still not resolving. Verify the host can reach the internet and gateway ${GW} is routing correctly."
-msg_ok "DNS OK"
+msg_ok "DNS OK (using: $(awk '/^nameserver/{printf "%s ", $2}' /etc/resolv.conf))"
 
 # ─── System Update ───────────────────────────────────────────────────────────
 msg_info "Updating system packages"

@@ -138,7 +138,9 @@ read -rp "${TAB3}Peer node IP (bare, no prefix): "        var_peer_ip
 [[ -z "$var_peer_ip" ]]     && msg_error "Peer IP is required."
 var_peer_ip="${var_peer_ip%%/*}"  # strip accidental prefix (e.g. /24)
 read -rp "${TAB3}Gateway          [${GW_DEFAULT}]: "      var_gw;       var_gw="${var_gw:-$GW_DEFAULT}"
-read -rp "${TAB3}DNS nameserver   [1.1.1.1]: "            var_dns;      var_dns="${var_dns:-1.1.1.1}"
+HOST_DNS=$(grep '^nameserver' /etc/resolv.conf 2>/dev/null | awk '{print $2}' | head -1)
+DNS_DEFAULT="${HOST_DNS:-1.1.1.1}"
+read -rp "${TAB3}DNS nameserver   [${DNS_DEFAULT}]: "     var_dns;      var_dns="${var_dns:-$DNS_DEFAULT}"
 
 # BACKUP: collect the primary's SSH pubkey
 if [[ "$ROLE" == "BACKUP" ]]; then
@@ -228,6 +230,7 @@ export VIP_IFACE="${var_vip_iface}"
 export VRRP_ID="${var_vrrp_id}"
 export VRRP_PASS="${var_vrrp_pass}"
 export SYNC_INTERVAL="${SYNC_INTERVAL_VAL}"
+export DNS_SERVERS="${var_dns}"
 ENVEOF
 
 pct push "$var_ctid" /tmp/npm-ha-config.sh /root/install-config.sh
