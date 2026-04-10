@@ -34,6 +34,16 @@ printf "${DGN}  %-45s  Ubuntu 24.04${CL}\n" "Docker + Nginx Proxy Manager + keep
 printf "${DGN}  OWN_IP: %-18s PEER_IP: %s${CL}\n" "$OWN_IP" "$PEER_IP"
 echo ""
 
+# ─── DNS Check ───────────────────────────────────────────────────────────────
+msg_info "Checking DNS resolution"
+if ! getent hosts archive.ubuntu.com &>/dev/null; then
+  msg_warn "DNS not resolving — writing fallback nameservers to /etc/resolv.conf"
+  printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
+  getent hosts archive.ubuntu.com &>/dev/null \
+    || msg_error "DNS still not resolving after fallback. Check container network/gateway."
+fi
+msg_ok "DNS OK"
+
 # ─── System Update ───────────────────────────────────────────────────────────
 msg_info "Updating system packages"
 export DEBIAN_FRONTEND=noninteractive

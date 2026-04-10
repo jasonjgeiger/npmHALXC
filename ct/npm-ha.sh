@@ -136,6 +136,7 @@ read -rp "${TAB3}This node IP (x.x.x.x/24): "             var_own_ip
 [[ "$var_own_ip" =~ "/" ]]  || msg_error "IP must include prefix (e.g. 192.168.1.21/24)"
 read -rp "${TAB3}Peer node IP (bare, no prefix): "        var_peer_ip
 [[ -z "$var_peer_ip" ]]     && msg_error "Peer IP is required."
+var_peer_ip="${var_peer_ip%%/*}"  # strip accidental prefix (e.g. /24)
 read -rp "${TAB3}Gateway          [${GW_DEFAULT}]: "      var_gw;       var_gw="${var_gw:-$GW_DEFAULT}"
 read -rp "${TAB3}DNS nameserver   [1.1.1.1]: "            var_dns;      var_dns="${var_dns:-1.1.1.1}"
 
