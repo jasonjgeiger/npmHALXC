@@ -3,6 +3,8 @@
 # Runs inside the container. Expects env vars sourced from /root/install-config.sh
 # before this script is executed.
 set -euo pipefail
+export LC_ALL=C.UTF-8 LANG=C.UTF-8 LANGUAGE=C
+unset LC_TERMINAL 2>/dev/null || true
 
 # ─── Colors & Messages ───────────────────────────────────────────────────────
 YW="\033[33m"; GN="\033[1;92m"; DGN="\033[32m"; RD="\033[01;31m"; CL="\033[m"

@@ -209,6 +209,10 @@ pct create "$var_ctid" "${TMPL_STORAGE}:vztmpl/${TEMPLATE}" \
   --onboot 1 &>/dev/null
 msg_ok "Container created (CTID ${var_ctid})"
 
+msg_info "Configuring container (AppArmor unconfined for Docker)"
+echo "lxc.apparmor.profile: unconfined" >> "/etc/pve/lxc/${var_ctid}.conf"
+msg_ok "AppArmor set to unconfined"
+
 msg_info "Starting container"
 pct start "$var_ctid"
 sleep 5
